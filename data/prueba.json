@@ -1,0 +1,112 @@
+[
+    {
+        "id": 1,
+        "transactionId": "BN-E59F485D",
+        "sede_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        },
+        "pair": "ETH/USDC",
+        "operation_type": "VENTA",
+        "precio": "2199.35",
+        "cantidad": "6.771780",
+        "total": "14893.51",
+        "fecha": 1790754252077,
+        "ubicacion_transaccion": {
+            "ciudad": "London",
+            "pais": "Reino Unido",
+            "latitud": 51.5074,
+            "longitud": -0.1278
+        }
+    },
+    {
+        "id": 2,
+        "transactionId": "BN-C967C36F",
+        "sede_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        },
+        "pair": "SOL/USDC",
+        "operation_type": "VENTA",
+        "precio": "144.60",
+        "cantidad": "19.092000",
+        "total": "2760.70",
+        "fecha": 1790754252703,
+        "ubicacion_transaccion": {
+            "ciudad": "Barcelona",
+            "pais": "España",
+            "latitud": 41.3874,
+            "longitud": 2.1686
+        }
+    },
+    {
+        "id": 3,
+        "transactionId": "BN-D3B17895",
+        "sede_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        },
+        "pair": "ETH/USDC",
+        "operation_type": "VENTA",
+        "precio": "2219.09",
+        "cantidad": "7.105920",
+        "total": "15768.68",
+        "fecha": 1790754253635,
+        "ubicacion_transaccion": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7128,
+            "longitud": -74.006
+        }
+    },
+    {
+        "id": 4,
+        "transactionId": "BN-F681EF0D",
+        "sede_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        },
+        "pair": "SOL/USDC",
+        "operation_type": "COMPRA",
+        "precio": "144.74",
+        "cantidad": "33.310500",
+        "total": "4821.36",
+        "fecha": 1790754255283,
+        "ubicacion_transaccion": {
+            "ciudad": "Madrid",
+            "pais": "España",
+            "latitud": 40.4168,
+            "longitud": -3.7038
+        }
+    },
+    {
+        "id": 5,
+        "transactionId": "BN-08813600",
+        "sede_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        },
+        "pair": "BTC/USDC",
+        "operation_type": "VENTA",
+        "precio": "82758.80",
+        "cantidad": "1.582391",
+        "total": "130956.78",
+        "fecha": 1790754256807,
+        "ubicacion_transaccion": {
+            "ciudad": "London",
+            "pais": "Reino Unido",
+            "latitud": 51.5074,
+            "longitud": -0.1278
+        }
+    }
+]

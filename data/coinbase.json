@@ -1,0 +1,112 @@
+[
+    {
+        "id": 1,
+        "transactionId": "CB-DA991224",
+        "exchange_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7142,
+            "longitud": -74.0059
+        },
+        "pair": "SOL/USDC",
+        "operation": "VENTA",
+        "price": "146.09",
+        "quantity": "44.000000",
+        "total_price": "6427.96",
+        "date": "30/09/2026 09:36:24",
+        "transaction_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7128,
+            "longitud": -74.006
+        }
+    },
+    {
+        "id": 2,
+        "transactionId": "CB-BA2B8230",
+        "exchange_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7142,
+            "longitud": -74.0059
+        },
+        "pair": "XRP/USDC",
+        "operation": "VENTA",
+        "price": "2.84",
+        "quantity": "233.000000",
+        "total_price": "661.72",
+        "date": "30/09/2026 09:36:25",
+        "transaction_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        }
+    },
+    {
+        "id": 3,
+        "transactionId": "CB-5721D37C",
+        "exchange_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7142,
+            "longitud": -74.0059
+        },
+        "pair": "XRP/USDC",
+        "operation": "VENTA",
+        "price": "2.82",
+        "quantity": "288.000000",
+        "total_price": "812.16",
+        "date": "30/09/2026 09:36:26",
+        "transaction_ubication": {
+            "ciudad": "Madrid",
+            "pais": "España",
+            "latitud": 40.4168,
+            "longitud": -3.7038
+        }
+    },
+    {
+        "id": 4,
+        "transactionId": "CB-A7A886D3",
+        "exchange_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7142,
+            "longitud": -74.0059
+        },
+        "pair": "ADA/USDC",
+        "operation": "VENTA",
+        "price": "0.75",
+        "quantity": "702.000000",
+        "total_price": "526.50",
+        "date": "30/09/2026 09:36:27",
+        "transaction_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        }
+    },
+    {
+        "id": 5,
+        "transactionId": "CB-A49486A1",
+        "exchange_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7142,
+            "longitud": -74.0059
+        },
+        "pair": "SOL/USDC",
+        "operation": "COMPRA",
+        "price": "145.32",
+        "quantity": "14.000000",
+        "total_price": "2034.48",
+        "date": "30/09/2026 09:36:29",
+        "transaction_ubication": {
+            "ciudad": "Tokyo",
+            "pais": "Japon",
+            "latitud": 35.6762,
+            "longitud": 139.6503
+        }
+    }
+]
