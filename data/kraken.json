@@ -1,0 +1,134 @@
+[
+    {
+        "id": 1,
+        "transactionId": "BN-A42EE473",
+        "fiscal_ubication": {
+            "ciudad": "Road Town",
+            "pais": "Islas Vírgenes Británicas",
+            "latitud": 18.4285,
+            "longitud": -64.6185
+        },
+        "values": "DOT/USDC",
+        "operation_type": "COMPRA",
+        "coin_value": "3.01",
+        "coin_operation_quantity": "638.511200",
+        "final_price": "1921.92",
+        "date": "30/09/2026 10:36:15",
+        "user_ubication": {
+            "ciudad": "London",
+            "pais": "Reino Unido",
+            "latitud": 51.5074,
+            "longitud": -0.1278
+        }
+    },
+    {
+        "id": 2,
+        "transactionId": "BN-C69D727C",
+        "fiscal_ubication": {
+            "ciudad": "Road Town",
+            "pais": "Islas Vírgenes Británicas",
+            "latitud": 18.4285,
+            "longitud": -64.6185
+        },
+        "values": "SUI/USDC",
+        "operation_type": "VENTA",
+        "coin_value": "1.99",
+        "coin_operation_quantity": "665.633800",
+        "final_price": "1324.61",
+        "date": "30/09/2026 10:37:58",
+        "user_ubication": {
+            "ciudad": "Madrid",
+            "pais": "España",
+            "latitud": 40.4168,
+            "longitud": -3.7038
+        }
+    },
+    {
+        "id": 3,
+        "transactionId": "BN-426928C4",
+        "fiscal_ubication": {
+            "ciudad": "Road Town",
+            "pais": "Islas Vírgenes Británicas",
+            "latitud": 18.4285,
+            "longitud": -64.6185
+        },
+        "values": "ETH/USDC",
+        "operation_type": "VENTA",
+        "coin_value": "2208.06",
+        "coin_operation_quantity": "10.382952",
+        "final_price": "22926.18",
+        "date": "30/09/2026 10:38:00",
+        "user_ubication": {
+            "ciudad": "London",
+            "pais": "Reino Unido",
+            "latitud": 51.5074,
+            "longitud": -0.1278
+        }
+    },
+    {
+        "id": 4,
+        "transactionId": "BN-F4D1B725",
+        "fiscal_ubication": {
+            "ciudad": "Road Town",
+            "pais": "Islas Vírgenes Británicas",
+            "latitud": 18.4285,
+            "longitud": -64.6185
+        },
+        "values": "ETH/USDC",
+        "operation_type": "COMPRA",
+        "coin_value": "2197.99",
+        "coin_operation_quantity": "19.795988",
+        "final_price": "43511.38",
+        "date": "30/09/2026 10:38:01",
+        "user_ubication": {
+            "ciudad": "London",
+            "pais": "Reino Unido",
+            "latitud": 51.5074,
+            "longitud": -0.1278
+        }
+    },
+    {
+        "id": 5,
+        "transactionId": "BN-B5804526",
+        "fiscal_ubication": {
+            "ciudad": "Road Town",
+            "pais": "Islas Vírgenes Británicas",
+            "latitud": 18.4285,
+            "longitud": -64.6185
+        },
+        "values": "DOT/USDC",
+        "operation_type": "VENTA",
+        "coin_value": "3.00",
+        "coin_operation_quantity": "193.780280",
+        "final_price": "581.34",
+        "date": "30/09/2026 10:38:02",
+        "user_ubication": {
+            "ciudad": "New York",
+            "pais": "Estados Unidos",
+            "latitud": 40.7128,
+            "longitud": -74.006
+        }
+    },
+    {
+        "id": 6,
+        "transactionId": "BN-5EB2C7D4",
+        "fiscal_ubication": {
+            "ciudad": "Road Town",
+            "pais": "Islas Vírgenes Británicas",
+            "latitud": 18.4285,
+            "longitud": -64.6185
+        },
+        "values": "SUI/USDC",
+        "operation_type": "COMPRA",
+        "coin_value": "1.97",
+        "coin_operation_quantity": "551.232400",
+        "final_price": "1085.93",
+        "date": "30/09/2026 10:38:03",
+        "user_ubication": {
+            "ciudad": "London",
+            "pais": "Reino Unido",
+            "latitud": 51.5074,
+            "longitud": -0.1278
+        }
+    }
+]
