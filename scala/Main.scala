@@ -1,6 +1,6 @@
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, split}
-import schemas.BinanceSchema
+import schemas.{BinanceSchema, CoinbaseSchema, KrakenSchema}
 
 object Main {
 
@@ -15,7 +15,13 @@ object Main {
     val binanceDF = spark.read.option("multiLine", "true").schema(BinanceSchema.customSchema).json("C://Users//ramon.reina//IdeaProjects//SparkStreamingElk//src//main//resources//data//prueba.json")
     binanceDF.show()
 
-    binanceDF.printSchema()
+    val krakenDF = spark.read.option("multiLine", "true").schema(KrakenSchema.customSchema).json("C://Users//ramon.reina//IdeaProjects//SparkStreamingElk//src//main//resources//data//kraken.json")
+    krakenDF.show()
+
+    val coinbaseDF = spark.read.option("multiLine", "true").schema(CoinbaseSchema.customSchema).json("C://Users//ramon.reina//IdeaProjects//SparkStreamingElk//src//main//resources//data//coinbase.json")
+    coinbaseDF.show()
+
+//    krakenDF.printSchema()
 
     println("Limpiando el DataFrame")
     val cleanBinanceDF = binanceDF
