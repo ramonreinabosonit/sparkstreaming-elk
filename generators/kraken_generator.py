@@ -2,10 +2,12 @@ import json
 import random
 import uuid
 import time
-from datetime import timezone, datetime
+from datetime import datetime
+import os
 
 EXCHANGE = "kraken"
-RUTAJSON = "data/kraken.json"
+# RUTAJSON = "data/kraken.json"
+RUTAJSON = "/mnt/c/Users/ramon.reina/IdeaProjects/SparkStreamingElk/src/main/resources/data/kraken"
 
 UBICACION = {
     "ciudad": "Road Town",
@@ -109,27 +111,18 @@ def generar_cantidad_operacion(mercado):
 # las transacciones se guardan pero no están bien en el formato json
 # hay que formatearlas bien
 def guardar_transaccion(transaccion):
-    try:
-        with open(RUTAJSON, "r", encoding="utf-8") as file:
-            transacciones = json.load(file)
 
-    except (FileNotFoundError, json.JSONDecodeError):
-        transacciones = []
+    transactionId = transaccion["transactionId"]
+    
+    fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
+    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    
+    nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
+    
+    rutaFichero = os.path.join(RUTAJSON, nombreFichero)
 
-    if transacciones:
-        id = transacciones[-1]["id"] + 1
-    else:
-        id = 1
-
-    transaccion = {
-        "id": id,
-        **transaccion
-    }
-
-    transacciones.append(transaccion)
-
-    with open(RUTAJSON, "w", encoding="utf-8") as f:
-        json.dump(transacciones, f, ensure_ascii=False, indent=4)      
+    with open(rutaFichero, "w", encoding="utf-8") as f:
+        json.dump(transaccion, f, ensure_ascii=False, indent=4)
 
 def generar_transaccion():
     
@@ -169,7 +162,8 @@ def main():
         
         time.sleep(random.uniform(0.5, 2.0))
         c = c+1
-        print(c)
+        # print(c)
+        print(f"{c}.{EXCHANGE} - {transaccion["transactionId"]}")
         if c == 5:
             break
         else:
