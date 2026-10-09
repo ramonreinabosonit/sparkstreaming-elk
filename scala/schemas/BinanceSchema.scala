@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType, StringType
 object BinanceSchema {
 
   val customSchema: StructType = StructType(Seq(
-    StructField("id", IntegerType, nullable = true),
+    //StructField("id", IntegerType, nullable = true),
     StructField("transactionId", StringType, nullable = true),
     StructField("sede_ubication", StructType(Seq(
       StructField("ciudad", StringType, nullable = true),

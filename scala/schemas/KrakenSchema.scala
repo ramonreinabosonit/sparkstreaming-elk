@@ -26,7 +26,6 @@ object KrakenSchema {
 //  }
 
   val customSchema: StructType = StructType(Seq(
-    StructField("id", IntegerType, nullable = false),
     StructField("transactionId", StringType, nullable = false),
     StructField("fiscal_ubication", StructType(Seq(
       StructField("ciudad", StringType, nullable = false),
