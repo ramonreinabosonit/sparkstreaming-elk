@@ -156,25 +156,35 @@ def generar_transaccion():
     return transaccion
     
 def main():
-    print("Esto es una prueba...")
+    print("BINANCE - INICANDO GENERADORES")
+    
+    # INTEGRACION CON LIMITE
+    # c = 0
+    
+    # while c != 5:
+    #     transaccion = generar_transaccion()
+        
+    #     # print(transaccion)
+    #     # print( json.dumps(transaccion), flush=True)
+    #     guardar_transaccion(transaccion)
+        
+    #     time.sleep(random.uniform(0.5, 2.0))
+    #     c = c+1
+    #     # print(c)
+    #     print(f"{c}.{EXCHANGE} - {transaccion["transactionId"]}")
+    #     if c == 5:
+    #         break
+    #     else:
+    #         pass
     
     c = 0
-    
-    while c != 5:
+    while True:
         transaccion = generar_transaccion()
-        
-        # print(transaccion)
-        # print( json.dumps(transaccion), flush=True)
         guardar_transaccion(transaccion)
         
-        time.sleep(random.uniform(0.5, 2.0))
+        time.sleep(random.uniform(0.5, 3.5))
         c = c+1
-        # print(c)
-        print(f"{c}.{EXCHANGE} - {transaccion["transactionId"]}")
-        if c == 5:
-            break
-        else:
-            pass
+        print(f"{c}. {EXCHANGE} - {transaccion["transactionId"]}")
         
 if __name__ == "__main__":
     main()
