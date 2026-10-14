@@ -1,8 +1,8 @@
 import org.apache.spark
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, split}
+import org.apache.spark.sql.functions.{col, split, lit, struct, to_timestamp, concat_ws}
+import org.apache.spark.sql.streaming.StreamingQuery
 import schemas.{BinanceSchema, CoinbaseSchema, KrakenSchema}
-
 import scala.util.control.Exception
 
 object Main {
@@ -11,13 +11,13 @@ object Main {
   def main(args: Array[String]): Unit = {
     println("Cargando librerías Spark")
 
-    try {
+//    try {
 //      val spark: SparkSession = SparkSession.builder().appName("SparkStreaming").master("local[*]").getOrCreate()
 //      spark.sparkContext.setLogLevel("WARN")
-//      return
-    } catch {
-      case e: Exception => println("Ha ocurrido un error cargando la SparkSession")
-    }
+//      return spark
+//    } catch {
+//      case e: Exception => println(s"Ha ocurrido un error cargando la SparkSession: ${e.getMessage}")
+//    }
     val spark: SparkSession = SparkSession.builder().appName("SparkStreaming").master("local[*]").getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
 
@@ -52,7 +52,9 @@ object Main {
       .withColumnRenamed("transactionId", "id_transaccion")
       .withColumnRenamed("operation_type", "tipo_operacion")
       .withColumnRenamed("pair", "par_activos")
-//    cleanBinanceDF.show()
+
+      .withColumn("fuente", lit("binance"))
+//    if (col("sede_latitud") > 90.0 || col("sede_latitud") < -90.0)
 
     val cleanKrakenDF = krakenDF
       .withColumn("sede_ciudad", col("fiscal_ubication.ciudad"))
@@ -76,6 +78,8 @@ object Main {
       .withColumnRenamed("operation_type", "tipo_operacion")
       .withColumnRenamed("values", "par_activos")
 
+      .withColumn("fuente", lit("kraken"))
+
     val cleanCoinbaseDF = coinbaseDF
       .withColumn("sede_ciudad", col("exchange_ubication.ciudad"))
       .withColumn("sede_pais", col("exchange_ubication.pais"))
@@ -98,62 +102,95 @@ object Main {
       .withColumnRenamed("operation", "tipo_operacion")
       .withColumnRenamed("pair", "par_activos")
 
+      .withColumn("fuente", lit("coinbase"))
+
     val cleanMasterDF = cleanBinanceDF.unionByName(cleanKrakenDF).unionByName(cleanCoinbaseDF)
 
-    println("Esperando 1 segundos")
-    Thread.sleep(1000)
+    // Ultima parte de la normalización para preparar Mappings a Elastic
+    val cleanElasticDF = cleanMasterDF
+      .withColumn("@timestamp",
+        to_timestamp(concat_ws(" ", col("fecha"), col("hora")), "dd/MM/yyyy HH:mm:ss"))
+      .withColumn("event", struct(
+          col("id_transaccion").as("id"),
+          lit("crypto_transaction").as("type"),
+          col("fuente").as("source")))
+      .withColumn("location", struct(struct(
+            col("transaccion_latitud").cast("double").as("lat"),
+            col("transaccion_longitud").cast("double").as("lon")).as("point"),
+          col("transaccion_ciudad").as("city"),
+          col("transaccion_pais").as("country")))
+      .withColumn("exchange", struct(struct(
+            col("sede_latitud").cast("double").as("lat"),
+            col("sede_longitud").cast("double").as("lon")).as("point")))
 
-    val query = cleanMasterDF.writeStream.outputMode("append")
-      .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+    // SOLUCION - CONEXION ELASTIC STREAM
+//    try {
+//      val query = sendToElasticStream(cleanElasticDF, "crypto-streaming", "checkpoints/crypto-streaming")
+//      query.awaitTermination()
+//    } catch {
+//      case e: Exception => println(s"Problema subiendo a Elastic...\n${e.getMessage}")
+//    }
+    try {
+      var ultimaActividad = System.currentTimeMillis()
+      val query = cleanElasticDF.writeStream
+        .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+          if (!batchDF.isEmpty) {
+            batchDF.write
+              .format("org.elasticsearch.spark.sql")
+              .option("es.nodes", "localhost").option("es.port", "9200")
+              .option("es.nodes.wan.only", "true").option("es.resource", "crypto-streaming")
+              .option("es.net.http.auth.user", "elastic").option("es.net.http.auth.pass", "Password2026")
+              .mode("append").save()
+            ultimaActividad = System.currentTimeMillis()
+          }
+        }
+        .option("checkpointLocation", "checkpoints/crypto-streaming").start()
 
-        println("\n======================================")
-        println(s"BATCH: $batchId")
-        println("======================================\n")
-
-        val total = batchDF.count()
-        println(s"Eventos recibidos en este batch: $total")
-
-        println("\n----- DATOS DEL BATCH -----")
-
-        batchDF.show(20, truncate = false)
-//        batchDF.select("id_transaccion", "par_activos", "tipo_operacion", "precio", "cantidad", "total", "fecha",
-//            "hora", "sede_ciudad", "transaccion_ciudad").show(20, truncate = false)
-
-        println("======================================\n")
-
+      while (query.isActive) {
+        // comprobaciones cada 5 segundos
+        Thread.sleep(5000)
+        if (System.currentTimeMillis() - ultimaActividad >= 60000) {
+          println("Minuto de inactividad alcanzado, apagando el streaming...")
+          query.stop()
+        }
       }
-      .option("checkpointLocation", "checkpoints/crypto_stream_test").start()
-    query.awaitTermination()
+    } catch {
+      case e: Exception =>
+        println(s"Problema subiendo a Elastic...\n${e.getMessage}")
+    }
 
-
-    // NO SE USAN BUCLES???
-//    while (true) {
-//      cleanBinanceDF.show(100)
-//      println("Esperando 5 segundos")
-//      Thread.sleep(5000)
-//      println("Ya")
+//    def sendToElasticStream(df: DataFrame, indice: String, checkpoint: String): StreamingQuery = {
+//      println("\nEnviando Datos a Elastic")
+//      df.writeStream.format("org.elasticsearch.spark.sql")
+//        .outputMode("append").option("es.nodes", "localhost")
+//        .option("es.port", "9200").option("es.nodes.wan.only", "true")
+//        .option("es.resource", indice).option("checkpointLocation", checkpoint)
+//        .option("es.net.http.auth.user", "elastic").option("es.net.http.auth.pass", "Password2026")
+//        .start()
 //    }
-//    cleanBinanceDF.show()
 
-
-    //    def sendToElastic(df: DataFrame, indice: String, id: String = ""): Unit = {
-//      println(s"Enviando $indice a Elastic")
-//      var envioElastic = df.write.format("org.elasticsearch.spark.sql")
-//        .option("es.resource", indice)
-//        .option("es.nodes", "elasticsearch")
-//        .option("es.port", "9200")
-//        .option("es.nodes.wan.only", "true")
-//        .option("es.net.http.auth.user", "elastic")
-//        .option("es.net.http.auth.pass", "Password2026")
-//        .mode("overwrite")
-//
-//      if(id.nonEmpty){
-//        envioElastic = envioElastic.option("es.mapping.id", id)
-//      }
-//
-//      envioElastic.save()
-//
-//      println(s"$indice enviado correctamente")
-//    }
+    ///////////////////////////////////////////////////////////
+    // PARA VER LOS LOGS Y LOS DF EN STREAM
+    //    val query = cleanMasterDF.writeStream.outputMode("append")
+    //      .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+    //
+    //        println("\n======================================")
+    //        println(s"BATCH: $batchId")
+    //        println("======================================\n")
+    //
+    //        val total = batchDF.count()
+    //        println(s"Eventos recibidos en este batch: $total")
+    //
+    //        println("\n----- DATOS DEL BATCH -----")
+    //
+    //        batchDF.show(20, truncate = false)
+    ////        batchDF.select("id_transaccion", "par_activos", "tipo_operacion", "precio", "cantidad", "total", "fecha",
+    ////            "hora", "sede_ciudad", "transaccion_ciudad").show(20, truncate = false)
+    //
+    //        println("======================================\n")
+    //
+    //      }
+    //      .option("checkpointLocation", "checkpoints/crypto_stream_test").start()
+    //    query.awaitTermination()
   }
 }
