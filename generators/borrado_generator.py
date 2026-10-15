@@ -1,12 +1,10 @@
 from pathlib import Path
 import time
 
-URL = Path(__file__).resolve().parent
-
 DIRECTORIOS = [
-    URL / "src/main/resources/data/binance",
-    URL / "src/main/resources/data/binance",
-    URL / "src/main/resources/data/binance"
+    Path("/mnt/c/Users/ramon.reina/IdeaProjects/SparkStreamingElk/src/main/resources/data/binance"),
+    Path("/mnt/c/Users/ramon.reina/IdeaProjects/SparkStreamingElk/src/main/resources/data/coinbase"),
+    Path("/mnt/c/Users/ramon.reina/IdeaProjects/SparkStreamingElk/src/main/resources/data/kraken")
 ]
 
 # maxima antiguedad de ficheros
