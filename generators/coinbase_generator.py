@@ -98,7 +98,36 @@ def generar_cantidad_operacion(mercado):
     
     elif mercado == "ADA/USDC":
         return round(random.uniform(100, 1000))
+
+# generar y comprobar errores
+def simular_incidencia(transaccion):
+    if random.random() >= 0.03:
+        return None
     
+    incidencia = random.choice(["precio_invalido", "fecha_invalida", "coordenadas_invalidas"])
+    
+    if incidencia == "precio_invalido":
+        transaccion["price"] = "mucho mucho dinero"
+
+    elif incidencia == "fecha_invalida":
+        transaccion["date"] = "coinbase octubre"
+
+# maxima longitud -180 180
+# maxima latitud -90 90
+    elif incidencia == "coordenadas_invalidas":
+        tipo_error = random.choice(["latitud_positiva", "latitud_negativa", "longitud_positiva", "longitud_negativa"])
+
+        if tipo_error == "latitud_positiva":
+            transaccion["transaction_ubication"]["latitud"] = random.uniform(90.0, 200.0)
+        elif tipo_error == "latitud_negativa":
+            transaccion["transaction_ubication"]["latitud"] = random.uniform(-200.0, -90.0)
+        elif tipo_error == "longitud_positiva":
+            transaccion["transaction_ubication"]["longitud"] = random.uniform(180.0, 300.0)
+        elif tipo_error == "longitud_negativa":
+            transaccion["transaction_ubication"]["longitud"] = random.uniform(-300.0, -180.0)
+    
+    return incidencia
+
 def guardar_transaccion(transaccion):
 
     transactionId = transaccion["transactionId"]
@@ -144,32 +173,18 @@ def generar_transaccion():
     
 def main():
     print("COINBASE - INICANDO GENERADORES")    
-    # c = 0
-    # while c != 5:
-    #     transaccion = generar_transaccion()
-        
-    #     # print(transaccion)
-    #     # print( json.dumps(transaccion), flush=True)
-    #     guardar_transaccion(transaccion)
-        
-    #     time.sleep(random.uniform(0.5, 2.0))
-    #     c = c+1
-    #     # print(c)
-    #     print(f"{c}.{EXCHANGE} - {transaccion["transactionId"]}")
-    #     if c == 5:
-    #         break
-    #     else:
-    #         pass
-    
     c = 0
     while True:
         transaccion = generar_transaccion()
+        incidencia = simular_incidencia(transaccion)
         guardar_transaccion(transaccion)
         
-        time.sleep(random.uniform(0.5, 4))
+        time.sleep(random.uniform(0.4, 2))
         c = c+1
-        print(f"{c}. {EXCHANGE} - {transaccion["transactionId"]}")
-        
+        if incidencia:
+            print(f"{c}. INCIDENCIA - {EXCHANGE} - {transaccion["transactionId"]} - {incidencia}")
+        else:
+            print(f"{c}. {EXCHANGE} - {transaccion["transactionId"]}")
         
 if __name__ == "__main__":
     main()

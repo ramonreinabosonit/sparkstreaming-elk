@@ -42,7 +42,6 @@ MERCADOS = {
 def generar_transactionId():
     return f"BN-{uuid.uuid4().hex[:8].upper()}"
 
-
 def generar_precio_mercado(mercado):
     precio_mercado = MERCADOS[mercado]["price"]
     
@@ -104,6 +103,35 @@ def generar_cantidad_operacion(mercado):
     elif mercado == "SOL/USDC":
         return round(random.uniform(0.3, 100), 4)
     
+# generar y comprobar errores
+def simular_incidencia(transaccion):
+    if random.random() >= 0.03:
+        return None
+    
+    incidencia = random.choice(["precio_invalido", "fecha_invalida", "coordenadas_invalidas"])
+    
+    if incidencia == "precio_invalido":
+        transaccion["precio"] = "quinientos cicuenta y dos"
+
+    elif incidencia == "fecha_invalida":
+        transaccion["fecha"] = "4 y media"
+
+# maxima longitud -180 180
+# maxima latitud -90 90
+    elif incidencia == "coordenadas_invalidas":
+        tipo_error = random.choice(["latitud_positiva", "latitud_negativa", "longitud_positiva", "longitud_negativa"])
+
+        if tipo_error == "latitud_positiva":
+            transaccion["ubicacion_transaccion"]["latitud"] = random.uniform(90.0, 200.0)
+        elif tipo_error == "latitud_negativa":
+            transaccion["ubicacion_transaccion"]["latitud"] = random.uniform(-200.0, -90.0)
+        elif tipo_error == "longitud_positiva":
+            transaccion["ubicacion_transaccion"]["longitud"] = random.uniform(180.0, 300.0)
+        elif tipo_error == "longitud_negativa":
+            transaccion["ubicacion_transaccion"]["longitud"] = random.uniform(-300.0, -180.0)
+    
+    return incidencia
+
 
 # las transacciones se guardan pero no están bien en el formato json
 # hay que formatearlas bien
@@ -115,8 +143,7 @@ def guardar_transaccion(transaccion):
     
     transactionId = transaccion["transactionId"]
     
-    fecha = datetime.strptime(transaccion["fecha"], "%d/%m/%Y %H:%M:%S")
-    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    fechaFormateada = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
     
@@ -148,7 +175,8 @@ def generar_transaccion():
         "cantidad": f"{cantidad:.6f}",
         "total": f"{cantidad*precio:.2f}",
         "fecha": fecha,
-        "ubicacion_transaccion": generar_ubicacion_transaccion()
+        "ubicacion_transaccion": generar_ubicacion_transaccion(),
+        # "status": 
     }
     
     # aqui guardamos la transaccion en nuestro fichero json
@@ -157,34 +185,18 @@ def generar_transaccion():
     
 def main():
     print("BINANCE - INICANDO GENERADORES")
-    
-    # INTEGRACION CON LIMITE
-    # c = 0
-    
-    # while c != 5:
-    #     transaccion = generar_transaccion()
-        
-    #     # print(transaccion)
-    #     # print( json.dumps(transaccion), flush=True)
-    #     guardar_transaccion(transaccion)
-        
-    #     time.sleep(random.uniform(0.5, 2.0))
-    #     c = c+1
-    #     # print(c)
-    #     print(f"{c}.{EXCHANGE} - {transaccion["transactionId"]}")
-    #     if c == 5:
-    #         break
-    #     else:
-    #         pass
-    
     c = 0
     while True:
         transaccion = generar_transaccion()
+        incidencia = simular_incidencia(transaccion)
         guardar_transaccion(transaccion)
         
-        time.sleep(random.uniform(0.5, 3.5))
+        time.sleep(random.uniform(0.2, 2))
         c = c+1
-        print(f"{c}. {EXCHANGE} - {transaccion["transactionId"]}")
+        if incidencia:
+            print(f"{c}. INCIDENCIA - {EXCHANGE} - {transaccion["transactionId"]} - {incidencia}")
+        else:
+            print(f"{c}. {EXCHANGE} - {transaccion["transactionId"]}")
         
 if __name__ == "__main__":
     main()
