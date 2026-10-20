@@ -1,7 +1,7 @@
 import org.apache.spark
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{col, split, lit, struct, to_timestamp, concat_ws}
-import org.apache.spark.sql.streaming.StreamingQuery
+//import org.apache.spark.sql.functions.{col, split, lit, struct, to_timestamp, concat_ws}
+import org.apache.spark.sql.functions._
 import schemas.{BinanceSchema, CoinbaseSchema, KrakenSchema}
 import scala.util.control.Exception
 
@@ -11,13 +11,6 @@ object Main {
   def main(args: Array[String]): Unit = {
     println("Cargando librerías Spark")
 
-//    try {
-//      val spark: SparkSession = SparkSession.builder().appName("SparkStreaming").master("local[*]").getOrCreate()
-//      spark.sparkContext.setLogLevel("WARN")
-//      return spark
-//    } catch {
-//      case e: Exception => println(s"Ha ocurrido un error cargando la SparkSession: ${e.getMessage}")
-//    }
     val spark: SparkSession = SparkSession.builder().appName("SparkStreaming").master("local[*]").getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
 
@@ -33,14 +26,16 @@ object Main {
     val coinbaseDF = spark.readStream.option("multiLine", true).schema(CoinbaseSchema.customSchema).json(coinbaseRutas)
 
     println("Limpiando el DataFrame")
+    // tener cuidado con los cast
+    // convierten en null las incidencias recibidas
     val cleanBinanceDF = binanceDF
       .withColumn("sede_ciudad", col("sede_ubication.ciudad"))
       .withColumn("sede_pais", col("sede_ubication.pais"))
       .withColumn("sede_latitud", col("sede_ubication.latitud"))
       .withColumn("sede_longitud", col("sede_ubication.longitud"))
-      .withColumn("precio", col("precio").cast("double"))
-      .withColumn("cantidad", col("cantidad").cast("double"))
-      .withColumn("total", col("total").cast("double"))
+//      .withColumn("precio", col("precio").cast("double"))
+//      .withColumn("cantidad", col("cantidad").cast("double"))
+//      .withColumn("total", col("total").cast("double"))
       .withColumn("hora", split(col("fecha"), " ") (1))
       .withColumn("fecha", split(col("fecha"), " ") (0))
 
@@ -53,6 +48,7 @@ object Main {
       .withColumnRenamed("operation_type", "tipo_operacion")
       .withColumnRenamed("pair", "par_activos")
 
+      // lit() sirve para crear una columna con un valor constante
       .withColumn("fuente", lit("binance"))
 //    if (col("sede_latitud") > 90.0 || col("sede_latitud") < -90.0)
 
@@ -61,9 +57,9 @@ object Main {
       .withColumn("sede_pais", col("fiscal_ubication.pais"))
       .withColumn("sede_latitud", col("fiscal_ubication.latitud"))
       .withColumn("sede_longitud", col("fiscal_ubication.longitud"))
-      .withColumn("precio", col("coin_value").cast("double"))
-      .withColumn("cantidad", col("coin_operation_quantity").cast("double"))
-      .withColumn("total", col("final_price").cast("double"))
+      .withColumn("precio", col("coin_value"))
+      .withColumn("cantidad", col("coin_operation_quantity"))
+      .withColumn("total", col("final_price"))
       .withColumn("hora", split(col("date"), " ") (1))
       .withColumn("fecha", split(col("date"), " ") (0))
 
@@ -85,9 +81,9 @@ object Main {
       .withColumn("sede_pais", col("exchange_ubication.pais"))
       .withColumn("sede_latitud", col("exchange_ubication.latitud"))
       .withColumn("sede_longitud", col("exchange_ubication.longitud"))
-      .withColumn("precio", col("price").cast("double"))
-      .withColumn("cantidad", col("quantity").cast("double"))
-      .withColumn("total", col("total_price").cast("double"))
+      .withColumn("precio", col("price"))
+      .withColumn("cantidad", col("quantity"))
+      .withColumn("total", col("total_price"))
       .withColumn("hora", split(col("date"), " ") (1))
       .withColumn("fecha", split(col("date"), " ") (0))
 
@@ -106,48 +102,86 @@ object Main {
 
     val cleanMasterDF = cleanBinanceDF.unionByName(cleanKrakenDF).unionByName(cleanCoinbaseDF)
 
-    // Ultima parte de la normalización para preparar Mappings a Elastic
-    val cleanElasticDF = cleanMasterDF
-      .withColumn("@timestamp",
-        to_timestamp(concat_ws(" ", col("fecha"), col("hora")), "dd/MM/yyyy HH:mm:ss"))
-      .withColumn("event", struct(
-          col("id_transaccion").as("id"),
-          lit("crypto_transaction").as("type"),
-          col("fuente").as("source")))
-      .withColumn("location", struct(struct(
-            col("transaccion_latitud").cast("double").as("lat"),
-            col("transaccion_longitud").cast("double").as("lon")).as("point"),
-          col("transaccion_ciudad").as("city"),
-          col("transaccion_pais").as("country")))
-      .withColumn("exchange", struct(struct(
-            col("sede_latitud").cast("double").as("lat"),
-            col("sede_longitud").cast("double").as("lon")).as("point")))
+    // VALIDACION, ANALIZAR SI EXISTEN O NO INCIDENCIAS - PREPARACION ELASTIC
+    val datosValidados = cleanMasterDF
+      .withColumn("fecha_validada", to_timestamp(concat_ws(" ", col("fecha"), col("hora")), "dd/MM/yyyy HH:mm:ss"))
+      .withColumn("precio_num", col("precio").cast("double"))
+      .withColumn("cantidad_num", col("cantidad").cast("double"))
+      .withColumn("total_num", col("total").cast("double"))
+      .withColumn("lat_num", col("transaccion_latitud").cast("double"))
+      .withColumn("lon_num", col("transaccion_longitud").cast("double"))
+      .withColumn("sede_lat_num", col("sede_latitud").cast("double"))
+      .withColumn("sede_lon_num", col("sede_longitud").cast("double"))
 
-    // SOLUCION - CONEXION ELASTIC STREAM
-//    try {
-//      val query = sendToElasticStream(cleanElasticDF, "crypto-streaming", "checkpoints/crypto-streaming")
-//      query.awaitTermination()
-//    } catch {
-//      case e: Exception => println(s"Problema subiendo a Elastic...\n${e.getMessage}")
-//    }
+      // limitacion de la columna error - recoge unicamente la primera incidencia
+      .withColumn("error",
+        when(col("id_transaccion").isNull || trim(col("id_transaccion")) === "", lit("ID ausente"))
+          .when(col("fecha_validada").isNull, lit("Fecha inválida"))
+          .when(col("precio_num").isNull || col("precio_num") <= 0, lit("Precio inválido"))
+          .when(col("cantidad_num").isNull || col("cantidad_num") <= 0, lit("Cantidad inválida"))
+          .when(col("total_num").isNull || col("total_num") <= 0, lit("Total inválido"))
+          .when(col("lat_num").isNull || col("lon_num").isNull ||
+            col("lat_num") < -90 || col("lat_num") > 90 || col("lon_num") < -180 || col("lon_num") > 180,
+            lit("Coordenadas inválidas"))
+          .when(
+            col("sede_lat_num").isNull || col("sede_lon_num").isNull ||
+              col("sede_lat_num") < -90 || col("sede_lat_num") > 90 ||
+              col("sede_lon_num") < -180 || col("sede_lon_num") > 180,
+            lit("Coordenadas de sede inválidas")
+          ))
+
     try {
+      println("Empezando el streaming")
       var ultimaActividad = System.currentTimeMillis()
-      val query = cleanElasticDF.writeStream
+      val query = datosValidados.writeStream
         .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
           if (!batchDF.isEmpty) {
-            batchDF.write
-              .format("org.elasticsearch.spark.sql")
-              .option("es.nodes", "localhost").option("es.port", "9200")
-              .option("es.nodes.wan.only", "true").option("es.resource", "crypto-streaming")
-              .option("es.net.http.auth.user", "elastic").option("es.net.http.auth.pass", "Password2026")
-              .mode("append").save()
+
+            val validos = batchDF
+              .filter(col("error").isNull)
+              .withColumnRenamed("fecha_validada", "@timestamp")
+              .withColumn("precio", col("precio_num"))
+              .withColumn("cantidad", col("cantidad_num"))
+              .withColumn("total", col("total_num"))
+              .withColumn("event", struct(col("id_transaccion").as("id"),
+                lit("crypto_transaction").as("type"), col("fuente").as("source")))
+              .withColumn("location", struct(struct(
+                col("lat_num").as("lat"), col("lon_num").as("lon")).as("point"),
+                col("transaccion_ciudad").as("city"), col("transaccion_pais").as("country")))
+              .withColumn("exchange", struct(struct(
+                col("sede_lat_num").as("lat"), col("sede_lon_num").as("lon")).as("point")))
+              .drop("precio_num", "cantidad_num", "total_num", "lat_num", "lon_num", "sede_lat_num", "sede_lon_num", "error")
+
+            val errores = batchDF
+              .filter(col("error").isNotNull)
+              .withColumn("@timestamp", coalesce(col("fecha_validada"), current_timestamp()))
+              .withColumn("status", lit("ERROR"))
+              .withColumn("event", struct(
+                col("id_transaccion").as("id"), lit("crypto_transaction").as("type"), col("fuente").as("source")))
+              .withColumn("precio_original", col("precio").cast("string"))
+              .withColumn("cantidad_original", col("cantidad").cast("string"))
+              .withColumn("total_original", col("total").cast("string"))
+              .withColumn("precio", col("precio_num"))
+              .withColumn("cantidad", col("cantidad_num"))
+              .withColumn("total", col("total_num"))
+              .withColumn("fecha_original", col("fecha").cast("string"))
+              .withColumn("hora_original", col("hora").cast("string"))
+              .withColumn("fecha", when(col("fecha_validada").isNotNull,
+                  date_format(col("fecha_validada"), "dd/MM/yyyy")).otherwise(lit(null).cast("string")))
+              .withColumn("hora", when(col("fecha_validada").isNotNull,
+                  date_format(col("fecha_validada"), "HH:mm:ss")).otherwise(lit(null).cast("string")))
+              .drop("fecha_validada", "precio_num", "cantidad_num", "total_num", "lat_num", "lon_num", "sede_lat_num", "sede_lon_num")
+
+            enviarAElastic(validos, "crypto-streaming")
+            enviarAElastic(errores, "crypto-streaming-errors")
             ultimaActividad = System.currentTimeMillis()
           }
         }
-        .option("checkpointLocation", "checkpoints/crypto-streaming").start()
+        .option("checkpointLocation", "checkpoints/crypto-streaming")
+        .start()
 
       while (query.isActive) {
-        // comprobaciones cada 5 segundos
+        //println("Empezando cuenta atras inactividad")
         Thread.sleep(5000)
         if (System.currentTimeMillis() - ultimaActividad >= 60000) {
           println("Minuto de inactividad alcanzado, apagando el streaming...")
@@ -156,41 +190,22 @@ object Main {
       }
     } catch {
       case e: Exception =>
-        println(s"Problema subiendo a Elastic...\n${e.getMessage}")
+        println(s"Ha habido un problema subiendo a Elastic...\n${e.getMessage}")
     }
 
-//    def sendToElasticStream(df: DataFrame, indice: String, checkpoint: String): StreamingQuery = {
-//      println("\nEnviando Datos a Elastic")
-//      df.writeStream.format("org.elasticsearch.spark.sql")
-//        .outputMode("append").option("es.nodes", "localhost")
-//        .option("es.port", "9200").option("es.nodes.wan.only", "true")
-//        .option("es.resource", indice).option("checkpointLocation", checkpoint)
-//        .option("es.net.http.auth.user", "elastic").option("es.net.http.auth.pass", "Password2026")
-//        .start()
-//    }
-
-    ///////////////////////////////////////////////////////////
-    // PARA VER LOS LOGS Y LOS DF EN STREAM
-    //    val query = cleanMasterDF.writeStream.outputMode("append")
-    //      .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
-    //
-    //        println("\n======================================")
-    //        println(s"BATCH: $batchId")
-    //        println("======================================\n")
-    //
-    //        val total = batchDF.count()
-    //        println(s"Eventos recibidos en este batch: $total")
-    //
-    //        println("\n----- DATOS DEL BATCH -----")
-    //
-    //        batchDF.show(20, truncate = false)
-    ////        batchDF.select("id_transaccion", "par_activos", "tipo_operacion", "precio", "cantidad", "total", "fecha",
-    ////            "hora", "sede_ciudad", "transaccion_ciudad").show(20, truncate = false)
-    //
-    //        println("======================================\n")
-    //
-    //      }
-    //      .option("checkpointLocation", "checkpoints/crypto_stream_test").start()
-    //    query.awaitTermination()
+    def enviarAElastic(df: DataFrame, indice: String): Unit = {
+      if (!df.isEmpty) {
+        df.write
+          .format("org.elasticsearch.spark.sql")
+          .option("es.nodes", "localhost")
+          .option("es.port", "9200")
+          .option("es.nodes.wan.only", "true")
+          .option("es.resource", indice)
+          .option("es.net.http.auth.user", "elastic")
+          .option("es.net.http.auth.pass", "Password2026")
+          .mode("append")
+          .save()
+      }
+    }
   }
 }
