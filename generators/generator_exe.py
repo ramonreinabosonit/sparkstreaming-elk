@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-from generators.borrado_generator import borrado_automatico
+from borrado_generator import borrado_automatico
 
 GENERADORES = [
     "generators/binance_generator.py",
@@ -10,6 +10,7 @@ GENERADORES = [
 ]
 
 def main():
+    print("Iniciando borrado automático programado")
     borrado_automatico()
     procesos = []
 

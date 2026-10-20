@@ -112,8 +112,6 @@ def simular_incidencia(transaccion):
     elif incidencia == "fecha_invalida":
         transaccion["date"] = "coinbase octubre"
 
-# maxima longitud -180 180
-# maxima latitud -90 90
     elif incidencia == "coordenadas_invalidas":
         tipo_error = random.choice(["latitud_positiva", "latitud_negativa", "longitud_positiva", "longitud_negativa"])
 
@@ -126,21 +124,40 @@ def simular_incidencia(transaccion):
         elif tipo_error == "longitud_negativa":
             transaccion["transaction_ubication"]["longitud"] = random.uniform(-300.0, -180.0)
     
+    transaccion["incidencia_simulada"] = incidencia
+    transaccion["estado_generacion"] = "INCIDENCIA"
+    
     return incidencia
 
 def guardar_transaccion(transaccion):
 
     transactionId = transaccion["transactionId"]
     
-    fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
-    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    # fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
+    # fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
     
-    nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
+    # nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
     
-    rutaFichero = os.path.join(RUTAJSON, nombreFichero)
+    # rutaFichero = os.path.join(RUTAJSON, nombreFichero)
 
-    with open(rutaFichero, "w", encoding="utf-8") as f:
+    # with open(rutaFichero, "w", encoding="utf-8") as f:
+    #     json.dump(transaccion, f, ensure_ascii=False, indent=4)
+   
+    try:
+        fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
+    except (ValueError, TypeError, KeyError):
+        fecha = datetime.now()
+
+    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    nombreFichero = (f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json")
+
+    os.makedirs(RUTAJSON, exist_ok=True)
+    
+    ruta_fichero = os.path.join(RUTAJSON, nombreFichero)
+
+    with open(ruta_fichero, "w", encoding="utf-8") as f:
         json.dump(transaccion, f, ensure_ascii=False, indent=4)
+    
    
 # generamos las transacciones para Coin Base
 def generar_transaccion():

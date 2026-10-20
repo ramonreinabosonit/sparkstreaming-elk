@@ -133,8 +133,8 @@ def simular_incidencia(transaccion):
     return incidencia
 
 
-# las transacciones se guardan pero no están bien en el formato json
-# hay que formatearlas bien
+# Hay que controlar los posibles errores que nos encontremos
+# de igual modo tenemos que almacenarlas en el json
 def guardar_transaccion(transaccion):
     
     # Lo vamos a cambair para guardar en un fichero cada evento:
@@ -142,16 +142,31 @@ def guardar_transaccion(transaccion):
     # esto para localizarlo facilmente y seguir una estructura clara
     
     transactionId = transaccion["transactionId"]
+    #     fechaFormateada = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+    #     nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
+        
+    #     rutaFichero = os.path.join(RUTAJSON, nombreFichero)
     
-    fechaFormateada = datetime.now().strftime("%Y%m%d_%H%M%S")
+    #     with open(rutaFichero, "w", encoding="utf-8") as f:
+    #         json.dump(transaccion, f, ensure_ascii=False, indent=4)
     
-    nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
-    
-    rutaFichero = os.path.join(RUTAJSON, nombreFichero)
+    try:
+        fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
+    except (ValueError, TypeError, KeyError):
+        fecha = datetime.now()
 
-    with open(rutaFichero, "w", encoding="utf-8") as f:
-        json.dump(transaccion, f, ensure_ascii=False, indent=4)      
+    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    nombreFichero = (f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json")
 
+    os.makedirs(RUTAJSON, exist_ok=True)
+    
+    ruta_fichero = os.path.join(RUTAJSON, nombreFichero)
+
+    with open(ruta_fichero, "w", encoding="utf-8") as f:
+        json.dump(transaccion, f, ensure_ascii=False, indent=4)
+    
+    
 # definir toda la estructura y parametros para crear la transaccion
 def generar_transaccion():
     

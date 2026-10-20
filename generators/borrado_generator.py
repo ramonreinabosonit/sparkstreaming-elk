@@ -29,7 +29,7 @@ def borrado_automatico():
             except OSError as er:
                 print(f"[ERROR] No se ha podido borrar {file}: {er}")
         
-    print(f"[BORRADO] Total archivos eliminados: {borrados}")
+    print(f"\n[BORRADO] Total archivos eliminados: {borrados}\n")
     
 if __name__ == "__main__":
     borrado_automatico()

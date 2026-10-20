@@ -142,15 +142,30 @@ def guardar_transaccion(transaccion):
 
     transactionId = transaccion["transactionId"]
     
-    fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
-    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    # fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
+    # fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
     
-    nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
+    # nombreFichero = f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json"
     
-    rutaFichero = os.path.join(RUTAJSON, nombreFichero)
+    # rutaFichero = os.path.join(RUTAJSON, nombreFichero)
 
-    with open(rutaFichero, "w", encoding="utf-8") as f:
+    # with open(rutaFichero, "w", encoding="utf-8") as f:
+    #     json.dump(transaccion, f, ensure_ascii=False, indent=4)
+    try:
+        fecha = datetime.strptime(transaccion["date"], "%d/%m/%Y %H:%M:%S")
+    except (ValueError, TypeError, KeyError):
+        fecha = datetime.now()
+
+    fechaFormateada = fecha.strftime("%Y%m%d_%H%M%S")
+    nombreFichero = (f"{EXCHANGE}_{fechaFormateada}_{transactionId}.json")
+
+    os.makedirs(RUTAJSON, exist_ok=True)
+    
+    ruta_fichero = os.path.join(RUTAJSON, nombreFichero)
+
+    with open(ruta_fichero, "w", encoding="utf-8") as f:
         json.dump(transaccion, f, ensure_ascii=False, indent=4)
+    
 
 def generar_transaccion():
     
